@@ -1,23 +1,30 @@
 <script>
+  import { slide } from "svelte/transition"
   let newTodo = ""
+  let id = 0
   let todos = [
     {
+      id: id++,
       title: "Get up",
       done: true,
     },
     {
+      id: id++,
       title: "Eat",
       done: true,
     },
     {
+      id: id++,
       title: "Go with vinky and kozi and rume and mima",
       done: false,
     },
     {
+      id: id++,
       title: "Clean floor",
       done: false,
     },
     {
+      id: id++,
       title: "Pet pussi",
       done: true,
     },
@@ -27,18 +34,22 @@
     if (newTodo === "") return
 
     todos = [
-      ...todos,
       {
+        id: ++id,
         title: newTodo,
         done: false,
       },
+      ...todos,
     ]
     newTodo = ""
   }
 
-  function removeTodo(i) {
-    todos.splice(i, 1)
-    todos = todos
+  function removeTodo(id) {
+    todos = todos.filter(todo => todo.id !== id)
+  }
+
+  function clearCompleted() {
+    todos = todos.filter(todo => !todo.done)
   }
 </script>
 
@@ -49,17 +60,30 @@
     <button disabled={newTodo === ""} on:click={addTodo}>Add</button>
   </section>
   <section class="todos">
-    {#each todos as todo, i}
-      <div class="todo">
+    {#each todos.filter(todo => !todo.done) as todo (todo.id)}
+      <div transition:slide class="todo">
         <input type="checkbox" bind:checked={todo.done} name="complete task" />
-        <input type="text" disabled class:done={todo.done} value={todo.title} />
-        <button on:click={() => removeTodo(i)}>x</button>
+        <input type="text" class:done={todo.done} bind:value={todo.title} />
+        <button on:click={() => removeTodo(todo.id)}>x</button>
       </div>
     {/each}
+    {#each todos.filter(todo => todo.done) as todo (todo.id)}
+      <div transition:slide class="todo">
+        <input type="checkbox" bind:checked={todo.done} name="complete task" />
+        <input type="text" class:done={todo.done} bind:value={todo.title} />
+        <button on:click={() => removeTodo(todo.id)}>x</button>
+      </div>
+    {/each}
+  </section>
+  <section>
+    <button on:click={clearCompleted}>Remove completed</button>
   </section>
 </main>
 
 <style>
+  h1 {
+    text-align: center;
+  }
   .add-todo {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -71,13 +95,13 @@
     align-items: center;
     gap: 0.5rem;
   }
-  input:disabled {
+  .todo input {
     border: none;
-    background: lightpink;
+    background: rgb(250, 172, 183);
     color: black;
   }
 
-  input:disabled.done {
+  .todo input.done {
     opacity: 0.4;
     text-decoration: line-through;
   }
